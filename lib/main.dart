@@ -16,6 +16,40 @@ class _WordSearchGameState extends State<WordSearchGame> {
 
   // 紀錄目前選中的格子索引
   Set<int> selectedIndexes = {};
+  int? startIndex; // 儲存滑動開始的格子
+
+  void _applyStraightLine(int start, int end) {
+    int startRow = start ~/ gridSize;
+    int startCol = start % gridSize;
+    int endRow = end ~/ gridSize;
+    int endCol = end % gridSize;
+
+    int dy = endRow - startRow;
+    int dx = endCol - startCol;
+
+    // 判斷方向
+    int stepR = dy == 0 ? 0 : dy.sign; // 行移動方向 (-1, 0, 1)
+    int stepC = dx == 0 ? 0 : dx.sign; // 列移動方向 (-1, 0, 1)
+
+    // 檢查是否符合直線規則 (水平、垂直、或 45度斜線)
+    if (dy == 0 || dx == 0 || dy.abs() == dx.abs()) {
+      Set<int> newSelection = {};
+      int currentRow = startRow;
+      int currentCol = startCol;
+
+      // 建立從起點到終點的線
+      while (true) {
+        newSelection.add(currentRow * gridSize + currentCol);
+        if (currentRow == endRow && currentCol == endCol) break;
+        currentRow += stepR;
+        currentCol += stepC;
+      }
+
+      setState(() {
+        selectedIndexes = newSelection;
+      });
+    }
+  }
 
   // 核心邏輯：將觸碰點轉為格子索引
   void _calculateIndex(Offset localPosition, BoxConstraints constraints) {
@@ -26,10 +60,13 @@ class _WordSearchGameState extends State<WordSearchGame> {
     int row = (localPosition.dy / cellHeight).floor();
 
     if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
-      int index = row * gridSize + col;
-      setState(() {
-        selectedIndexes.add(index); // 這裡可以加入直線判斷邏輯
-      });
+      int currentIndex = row * gridSize + col;
+
+      if (startIndex == null) {
+        startIndex = currentIndex;
+      }
+
+      _applyStraightLine(startIndex!, currentIndex);
     }
   }
 
@@ -44,8 +81,14 @@ class _WordSearchGameState extends State<WordSearchGame> {
               // 手指按下、移動時觸發
               onPanUpdate: (details) =>
                   _calculateIndex(details.localPosition, constraints),
-              onPanEnd: (_) =>
-                  setState(() => selectedIndexes.clear()), // 手指放開清空選取
+              onPanEnd: (_) {
+                // 這裡可以檢查 selectedIndexes 的單字是否正確
+                print("選取的索引: $selectedIndexes");
+                setState(() {
+                  startIndex = null; // 重置
+                  selectedIndexes.clear();
+                });
+              },
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
