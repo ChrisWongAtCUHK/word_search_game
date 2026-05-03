@@ -21,10 +21,14 @@ class WordSearchLogic {
 
   // 方向向量：[行增量, 列增量]
   final List<List<int>> directions = [
-    [0, 1], // 水平
-    [1, 0], // 垂直
-    [1, 1], // 右下對角
-    [-1, 1], // 右上對角
+    [0, 1], // right
+    [0, -1], // left
+    [1, 0], // down
+    [-1, 0], // up
+    [1, 1], // right-down
+    [-1, -1], // left-up
+    [-1, 1], // right-up
+    [1, -1], // left-down
   ];
 
   void fisherYatesShuffle<T>(List<T> list) {
