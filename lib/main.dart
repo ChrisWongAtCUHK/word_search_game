@@ -172,9 +172,11 @@ class _WordSearchGameState extends State<WordSearchGame> {
   }
 
   void _checkWin() {
+    // 將實際放入的單字轉為 Set，確保比對基準唯一
+    final expectedSet = logic.actualPlacedWords.toSet();
+
     // 檢查是否所有「成功放入網格」的單字都找齊了
-    if (foundWords.length == logic.actualPlacedWords.length &&
-        logic.actualPlacedWords.isNotEmpty) {
+    if (foundWords.length == expectedSet.length && expectedSet.isNotEmpty) {
       showDialog(
         context: context,
         barrierDismissible: false, // 玩家必須點擊按鈕
