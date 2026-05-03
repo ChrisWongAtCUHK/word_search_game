@@ -90,6 +90,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
     64,
     (index) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[index % 26],
   );
+  Set<int> foundIndexes = {}; // 儲存已經被永久鎖定的格子
 
   // 紀錄目前選中的格子索引
   Set<int> selectedIndexes = {};
@@ -161,13 +162,32 @@ class _WordSearchGameState extends State<WordSearchGame> {
               // 手指按下、移動時觸發
               onPanUpdate: (details) => _calculateIndex(details.globalPosition),
               onPanEnd: (_) {
-                // 這裡可以檢查 selectedIndexes 的單字是否正確
-                print("選取的索引: $selectedIndexes");
+                // 1. 將選中的索引轉回字母組合成單字
+                // 先把 selectedIndexes 轉成 List 並排序（避免選取的順序影響比對，但要注意如果是反向選取需要特別處理）
+                // 這裡簡單處理：按索引順序組合
+                List<int> sortedIndices = selectedIndexes.toList()..sort();
+                String selectedWord = sortedIndices
+                    .map((i) => letters[i])
+                    .join();
+                String reversedWord = selectedWord.split('').reversed.join();
+
+                // 2. 比對 Pokemon 名單 (檢查正向或反向)
+                if (logic.pokemonNames.contains(selectedWord) ||
+                    logic.pokemonNames.contains(reversedWord)) {
+                  // 答對了！將目前選中的加入永久集合
+                  setState(() {
+                    foundIndexes.addAll(selectedIndexes);
+                  });
+                  print("找到 Pokemon: $selectedWord !");
+                }
+
+                // 3. 重置暫時選取的狀態
                 setState(() {
-                  startIndex = null; // 重置
+                  startIndex = null;
                   selectedIndexes.clear();
                 });
               },
+
               child: GridView.builder(
                 key: _gridKey, // 關鍵：把 Key 綁在這裡
                 shrinkWrap: true,
@@ -179,10 +199,15 @@ class _WordSearchGameState extends State<WordSearchGame> {
                 itemCount: gridSize * gridSize,
                 itemBuilder: (context, index) {
                   bool isSelected = selectedIndexes.contains(index);
+                  bool isFound = foundIndexes.contains(index); // 檢查是否已找到
+
                   return Container(
                     margin: EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.orange : Colors.blue[100],
+                      // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
+                      color: isSelected
+                          ? Colors.orange
+                          : (isFound ? Colors.green : Colors.blue[100]),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Center(
@@ -191,6 +216,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          // 已找到的字可以變色或加刪除線
+                          color: isFound ? Colors.white : Colors.black87,
                         ),
                       ),
                     ),
