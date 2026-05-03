@@ -4,7 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 class WordSearchLogic {
   final int gridSize;
-  final List<String> pokemonNames = [
+  final List<String> pokemonPool = [
     "PIKACHU",
     "EEVEE",
     "MEW",
@@ -12,7 +12,9 @@ class WordSearchLogic {
     "BULBASAUR",
     "DITTO",
   ];
+  List<String> pokemonNames = [];
   late List<String> grid;
+
   List<String> actualPlacedWords = []; // 儲存成功放入網格的單字
 
   WordSearchLogic(this.gridSize) {
@@ -44,6 +46,17 @@ class WordSearchLogic {
   }
 
   void generate() {
+    final r = Random();
+    final min = 3;
+    final max = 6;
+    int countOfPokemons = r.nextInt(max - min + 1) + min;
+    pokemonNames.clear();
+    // 1. 複製一份池子以免破壞原始資料，並打亂它
+    List<String> shuffledPool = List.from(pokemonPool)..shuffle(r);
+
+    // 2. 直接取出前 countOfPokemons 個，保證不重複
+    pokemonNames = shuffledPool.take(countOfPokemons).toList();
+
     // 重新初始化 grid，否則舊的字母會一直留在那裡
     grid = List.filled(gridSize * gridSize, "");
     actualPlacedWords.clear(); // 重置
