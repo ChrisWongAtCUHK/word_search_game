@@ -27,15 +27,33 @@ class WordSearchLogic {
     [-1, 1], // 右上對角
   ];
 
+  void fisherYatesShuffle<T>(List<T> list) {
+    final random = Random();
+    for (int i = list.length - 1; i > 0; i--) {
+      // 隨機選取一個 0 到 i 之間的索引
+      int j = random.nextInt(i + 1);
+      // 交換位置
+      T temp = list[i];
+      list[i] = list[j];
+      list[j] = temp;
+    }
+  }
+
   void generate() {
     actualPlacedWords.clear(); // 重置
     final rand = Random();
+
+    // 1. 先打亂單字庫
+    fisherYatesShuffle(pokemonNames);
+
+    // 2. 打亂方向順序
+    fisherYatesShuffle(directions);
 
     for (String word in pokemonNames) {
       bool placed = false;
       int attempts = 0;
 
-      while (!placed && attempts < 100) {
+      while (!placed && attempts < 1000) {
         int dirIndex = rand.nextInt(directions.length);
         int row = rand.nextInt(gridSize);
         int col = rand.nextInt(gridSize);
@@ -43,8 +61,10 @@ class WordSearchLogic {
         if (canPlace(word, row, col, directions[dirIndex])) {
           placeWord(word, row, col, directions[dirIndex]);
           placed = true;
-          // 在 placeWord 成功後加入：
-          actualPlacedWords.add(word);
+          if (!actualPlacedWords.contains(word)) {
+            // 確保不重複加入
+            actualPlacedWords.add(word);
+          }
         }
         attempts++;
       }
@@ -169,9 +189,15 @@ class _WordSearchGameState extends State<WordSearchGame> {
       foundWords.clear(); // 清空已找到單字紀錄
       startIndex = null;
     });
+
+    // 偵錯用：確認新一局的目標單字數量
+    print("新一局開始！目標單字數: ${logic.actualPlacedWords.length}");
   }
 
   void _checkWin() {
+    print(
+      "目前找到: ${foundWords.length}, 目標需找: ${logic.actualPlacedWords.length}",
+    );
     // 將實際放入的單字轉為 Set，確保比對基準唯一
     final expectedSet = logic.actualPlacedWords.toSet();
 
@@ -318,7 +344,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
             padding: const EdgeInsets.all(16.0),
             child: Wrap(
               spacing: 10,
-              children: logic.pokemonNames.map((name) {
+              children: logic.actualPlacedWords.map((name) {
                 bool isFound = foundWords.contains(name); // 假設你紀錄了找到的單字名
                 return Text(
                   name,
