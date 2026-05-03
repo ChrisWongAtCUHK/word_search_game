@@ -95,6 +95,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   // 紀錄目前選中的格子索引
   Set<int> selectedIndexes = {};
   int? startIndex; // 儲存滑動開始的格子
+  List<String> foundWords = [];
 
   void _applyStraightLine(int start, int end) {
     int startRow = start ~/ gridSize;
@@ -154,79 +155,118 @@ class _WordSearchGameState extends State<WordSearchGame> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Flutter Word Search")),
-      body: Center(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GestureDetector(
-              // 手指按下、移動時觸發
-              onPanUpdate: (details) => _calculateIndex(details.globalPosition),
-              onPanEnd: (_) {
-                // 1. 將選中的索引轉回字母組合成單字
-                // 先把 selectedIndexes 轉成 List 並排序（避免選取的順序影響比對，但要注意如果是反向選取需要特別處理）
-                // 這裡簡單處理：按索引順序組合
-                List<int> sortedIndices = selectedIndexes.toList()..sort();
-                String selectedWord = sortedIndices
-                    .map((i) => letters[i])
-                    .join();
-                String reversedWord = selectedWord.split('').reversed.join();
+      appBar: AppBar(title: Text("Pokemon Word Search")),
+      body: Column(
+        children: [
+          // 頂部資訊區 (例如顯示分數或提示)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "找到所有隱藏的 Pokemon!",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          // 2. 網格區：使用 Expanded 確保網格佔用適當空間
+          Expanded(
+            child: Center(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return GestureDetector(
+                    // 手指按下、移動時觸發
+                    onPanUpdate: (details) =>
+                        _calculateIndex(details.globalPosition),
+                    onPanEnd: (_) {
+                      // 1. 將選中的索引轉回字母組合成單字
+                      // 先把 selectedIndexes 轉成 List 並排序（避免選取的順序影響比對，但要注意如果是反向選取需要特別處理）
+                      // 這裡簡單處理：按索引順序組合
+                      List<int> sortedIndices = selectedIndexes.toList()
+                        ..sort();
+                      String selectedWord = sortedIndices
+                          .map((i) => letters[i])
+                          .join();
+                      String reversedWord = selectedWord
+                          .split('')
+                          .reversed
+                          .join();
 
-                // 2. 比對 Pokemon 名單 (檢查正向或反向)
-                if (logic.pokemonNames.contains(selectedWord) ||
-                    logic.pokemonNames.contains(reversedWord)) {
-                  // 答對了！將目前選中的加入永久集合
-                  setState(() {
-                    foundIndexes.addAll(selectedIndexes);
-                  });
-                  print("找到 Pokemon: $selectedWord !");
-                }
+                      // 2. 比對 Pokemon 名單 (檢查正向或反向)
+                      if (logic.pokemonNames.contains(selectedWord) ||
+                          logic.pokemonNames.contains(reversedWord)) {
+                        // 答對了！將目前選中的加入永久集合
+                        setState(() {
+                          foundIndexes.addAll(selectedIndexes);
+                        });
+                        print("找到 Pokemon: $selectedWord !");
+                        foundWords.add(selectedWord);
+                      }
 
-                // 3. 重置暫時選取的狀態
-                setState(() {
-                  startIndex = null;
-                  selectedIndexes.clear();
-                });
-              },
+                      // 3. 重置暫時選取的狀態
+                      setState(() {
+                        startIndex = null;
+                        selectedIndexes.clear();
+                      });
+                    },
 
-              child: GridView.builder(
-                key: _gridKey, // 關鍵：把 Key 綁在這裡
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: gridSize,
-                  childAspectRatio: 1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
-                ),
-                itemCount: gridSize * gridSize,
-                itemBuilder: (context, index) {
-                  bool isSelected = selectedIndexes.contains(index);
-                  bool isFound = foundIndexes.contains(index); // 檢查是否已找到
-
-                  return Container(
-                    margin: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
-                      color: isSelected
-                          ? Colors.orange
-                          : (isFound ? Colors.green : Colors.blue[100]),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Center(
-                      child: Text(
-                        letters[index],
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          // 已找到的字可以變色或加刪除線
-                          color: isFound ? Colors.white : Colors.black87,
-                        ),
+                    child: GridView.builder(
+                      key: _gridKey, // 關鍵：把 Key 綁在這裡
+                      shrinkWrap: true,
+                      physics:
+                          NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: gridSize,
+                        childAspectRatio: 1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
                       ),
+                      itemCount: gridSize * gridSize,
+                      itemBuilder: (context, index) {
+                        bool isSelected = selectedIndexes.contains(index);
+                        bool isFound = foundIndexes.contains(index); // 檢查是否已找到
+
+                        return Container(
+                          margin: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
+                            color: isSelected
+                                ? Colors.orange
+                                : (isFound ? Colors.green : Colors.blue[100]),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Center(
+                            child: Text(
+                              letters[index],
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                // 已找到的字可以變色或加刪除線
+                                color: isFound ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Wrap(
+              spacing: 10,
+              children: logic.pokemonNames.map((name) {
+                bool isFound = foundWords.contains(name); // 假設你紀錄了找到的單字名
+                return Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    decoration: isFound ? TextDecoration.lineThrough : null,
+                    color: isFound ? Colors.grey : Colors.black,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
