@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 
 class WordSearchLogic {
   final int gridSize;
@@ -90,6 +91,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   late WordSearchLogic logic;
   final int gridSize = 10;
   final GlobalKey _gridKey = GlobalKey();
+  final AudioPlayer _audioPlayer = AudioPlayer(); // 建立播放器實例
   List<String> letters = List.generate(
     100,
     (index) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[index % 26],
@@ -191,6 +193,11 @@ class _WordSearchGameState extends State<WordSearchGame> {
     }
   }
 
+  Future<void> _playSound() async {
+    // 使用 AssetSource 播放專案內的音效
+    await _audioPlayer.play(AssetSource('audio/pikachu.mp3'));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,6 +244,9 @@ class _WordSearchGameState extends State<WordSearchGame> {
                         });
                         print("找到 Pokemon: $selectedWord !");
                         foundWords.add(selectedWord);
+
+                        _playSound(); // <--- 在這裡播放比卡超叫聲！
+
                         // 檢查是否全數找完
                         Future.delayed(
                           Duration(milliseconds: 300),
@@ -322,5 +332,11 @@ class _WordSearchGameState extends State<WordSearchGame> {
     logic.generate();
     // 將生成的 grid 賦值給你的 letters 變數
     letters = logic.grid;
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose(); // 記得銷毀播放器釋放記憶體
+    super.dispose();
   }
 }
