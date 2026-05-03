@@ -193,9 +193,9 @@ class _WordSearchGameState extends State<WordSearchGame> {
     }
   }
 
-  Future<void> _playSound() async {
+  Future<void> _playSound(String pokemonName) async {
     // 使用 AssetSource 播放專案內的音效
-    await _audioPlayer.play(AssetSource('audio/pikachu.mp3'));
+    await _audioPlayer.play(AssetSource('audio/$pokemonName.mp3'));
   }
 
   @override
@@ -252,7 +252,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                           foundWords.add(match!);
                         });
 
-                        _playSound(); // <--- 在這裡播放比卡超叫聲！
+                        _playSound(match.toLowerCase()); // <--- 在這裡播放叫聲！
 
                         // 檢查是否全數找完
                         Future.delayed(
