@@ -1,4 +1,79 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
+
+class WordSearchLogic {
+  final int gridSize;
+  final List<String> pokemonNames = [
+    "PIKACHU",
+    "EEVEE",
+    "MEW",
+    "CHARIZARD",
+    "BULBASAUR",
+    "DITTO",
+  ];
+  late List<String> grid;
+
+  WordSearchLogic(this.gridSize) {
+    grid = List.filled(gridSize * gridSize, "");
+  }
+
+  // 方向向量：[行增量, 列增量]
+  final List<List<int>> directions = [
+    [0, 1], // 水平
+    [1, 0], // 垂直
+    [1, 1], // 右下對角
+    [-1, 1], // 右上對角
+  ];
+
+  void generate() {
+    final rand = Random();
+
+    for (String word in pokemonNames) {
+      bool placed = false;
+      int attempts = 0;
+
+      while (!placed && attempts < 100) {
+        int dirIndex = rand.nextInt(directions.length);
+        int row = rand.nextInt(gridSize);
+        int col = rand.nextInt(gridSize);
+
+        if (canPlace(word, row, col, directions[dirIndex])) {
+          placeWord(word, row, col, directions[dirIndex]);
+          placed = true;
+        }
+        attempts++;
+      }
+    }
+
+    // 最後用隨機字母填滿空格
+    for (int i = 0; i < grid.length; i++) {
+      if (grid[i] == "") {
+        grid[i] = String.fromCharCode(rand.nextInt(26) + 65);
+      }
+    }
+  }
+
+  bool canPlace(String word, int row, int col, List<int> dir) {
+    for (int i = 0; i < word.length; i++) {
+      int r = row + (i * dir[0]);
+      int c = col + (i * dir[1]);
+
+      if (r < 0 || r >= gridSize || c < 0 || c >= gridSize) return false;
+
+      String currentLetter = grid[r * gridSize + c];
+      if (currentLetter != "" && currentLetter != word[i]) return false;
+    }
+    return true;
+  }
+
+  void placeWord(String word, int row, int col, List<int> dir) {
+    for (int i = 0; i < word.length; i++) {
+      int r = row + (i * dir[0]);
+      int c = col + (i * dir[1]);
+      grid[r * gridSize + c] = word[i];
+    }
+  }
+}
 
 void main() => runApp(MaterialApp(home: WordSearchGame()));
 
@@ -8,8 +83,9 @@ class WordSearchGame extends StatefulWidget {
 }
 
 class _WordSearchGameState extends State<WordSearchGame> {
+  late WordSearchLogic logic;
   final int gridSize = 8;
-  final List<String> letters = List.generate(
+  List<String> letters = List.generate(
     64,
     (index) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[index % 26],
   );
@@ -94,6 +170,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                 physics: NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: gridSize,
+                  childAspectRatio: 1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
                 ),
                 itemCount: gridSize * gridSize,
                 itemBuilder: (context, index) {
@@ -121,5 +198,14 @@ class _WordSearchGameState extends State<WordSearchGame> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    logic = WordSearchLogic(8); // 8x8 網格
+    logic.generate();
+    // 將生成的 grid 賦值給你的 letters 變數
+    letters = logic.grid;
   }
 }
