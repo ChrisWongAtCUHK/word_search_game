@@ -83,8 +83,10 @@ class WordSearchLogic {
 void main() => runApp(MaterialApp(home: WordSearchGame()));
 
 class WordSearchGame extends StatefulWidget {
+  const WordSearchGame({super.key});
+
   @override
-  _WordSearchGameState createState() => _WordSearchGameState();
+  State<WordSearchGame> createState() => _WordSearchGameState();
 }
 
 class _WordSearchGameState extends State<WordSearchGame> {
@@ -153,7 +155,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
     // 檢查座標是否在網格範圍內
     if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
       int currentIndex = row * gridSize + col;
-      if (startIndex == null) startIndex = currentIndex;
+      startIndex ??= currentIndex;
       _applyStraightLine(startIndex!, currentIndex);
     }
   }
