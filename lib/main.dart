@@ -12,6 +12,7 @@ class WordSearchLogic {
     "DITTO",
   ];
   late List<String> grid;
+  List<String> actualPlacedWords = []; // 儲存成功放入網格的單字
 
   WordSearchLogic(this.gridSize) {
     grid = List.filled(gridSize * gridSize, "");
@@ -26,6 +27,7 @@ class WordSearchLogic {
   ];
 
   void generate() {
+    actualPlacedWords.clear(); // 重置
     final rand = Random();
 
     for (String word in pokemonNames) {
@@ -40,6 +42,8 @@ class WordSearchLogic {
         if (canPlace(word, row, col, directions[dirIndex])) {
           placeWord(word, row, col, directions[dirIndex]);
           placed = true;
+          // 在 placeWord 成功後加入：
+          actualPlacedWords.add(word);
         }
         attempts++;
       }
@@ -95,7 +99,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   // 紀錄目前選中的格子索引
   Set<int> selectedIndexes = {};
   int? startIndex; // 儲存滑動開始的格子
-  List<String> foundWords = [];
+  Set<String> foundWords = {};
 
   void _applyStraightLine(int start, int end) {
     int startRow = start ~/ gridSize;
@@ -152,6 +156,41 @@ class _WordSearchGameState extends State<WordSearchGame> {
     }
   }
 
+  void _resetGame() {
+    setState(() {
+      logic.generate(); // 重新生成網格字母
+      letters = logic.grid; // 更新 UI 用的字母清單
+      foundIndexes.clear(); // 清空綠色格子
+      selectedIndexes.clear(); // 清空當前選取
+      foundWords.clear(); // 清空已找到單字紀錄
+      startIndex = null;
+    });
+  }
+
+  void _checkWin() {
+    // 檢查是否所有「成功放入網格」的單字都找齊了
+    if (foundWords.length == logic.actualPlacedWords.length &&
+        logic.actualPlacedWords.isNotEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // 玩家必須點擊按鈕
+        builder: (context) => AlertDialog(
+          title: Text("太棒了！"),
+          content: Text("你找到了所有的 Pokemon！"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _resetGame(); // 重新開始
+              },
+              child: Text("再玩一次"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,6 +237,11 @@ class _WordSearchGameState extends State<WordSearchGame> {
                         });
                         print("找到 Pokemon: $selectedWord !");
                         foundWords.add(selectedWord);
+                        // 檢查是否全數找完
+                        Future.delayed(
+                          Duration(milliseconds: 300),
+                          () => _checkWin(),
+                        );
                       }
 
                       // 3. 重置暫時選取的狀態
