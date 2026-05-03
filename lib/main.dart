@@ -189,15 +189,9 @@ class _WordSearchGameState extends State<WordSearchGame> {
       foundWords.clear(); // 清空已找到單字紀錄
       startIndex = null;
     });
-
-    // 偵錯用：確認新一局的目標單字數量
-    print("新一局開始！目標單字數: ${logic.actualPlacedWords.length}");
   }
 
   void _checkWin() {
-    print(
-      "目前找到: ${foundWords.length}, 目標需找: ${logic.actualPlacedWords.length}",
-    );
     // 將實際放入的單字轉為 Set，確保比對基準唯一
     final expectedSet = logic.actualPlacedWords.toSet();
 
