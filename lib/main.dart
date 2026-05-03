@@ -85,6 +85,7 @@ class WordSearchGame extends StatefulWidget {
 class _WordSearchGameState extends State<WordSearchGame> {
   late WordSearchLogic logic;
   final int gridSize = 8;
+  final GlobalKey _gridKey = GlobalKey();
   List<String> letters = List.generate(
     64,
     (index) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[index % 26],
@@ -127,21 +128,24 @@ class _WordSearchGameState extends State<WordSearchGame> {
     }
   }
 
-  // 核心邏輯：將觸碰點轉為格子索引
-  void _calculateIndex(Offset localPosition, BoxConstraints constraints) {
-    double cellWidth = constraints.maxWidth / gridSize;
-    double cellHeight = constraints.maxHeight / gridSize;
+  void _calculateIndex(Offset globalPosition) {
+    // 獲取網格在螢幕上的實際位置
+    final RenderBox box =
+        _gridKey.currentContext?.findRenderObject() as RenderBox;
+    final Offset localOffset = box.globalToLocal(
+      globalPosition,
+    ); // 關鍵：轉換為網格內部的相對座標
 
-    int col = (localPosition.dx / cellWidth).floor();
-    int row = (localPosition.dy / cellHeight).floor();
+    double cellWidth = box.size.width / gridSize;
+    double cellHeight = box.size.height / gridSize;
 
+    int col = (localOffset.dx / cellWidth).floor();
+    int row = (localOffset.dy / cellHeight).floor();
+
+    // 檢查座標是否在網格範圍內
     if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
       int currentIndex = row * gridSize + col;
-
-      if (startIndex == null) {
-        startIndex = currentIndex;
-      }
-
+      if (startIndex == null) startIndex = currentIndex;
       _applyStraightLine(startIndex!, currentIndex);
     }
   }
@@ -155,8 +159,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
           builder: (context, constraints) {
             return GestureDetector(
               // 手指按下、移動時觸發
-              onPanUpdate: (details) =>
-                  _calculateIndex(details.localPosition, constraints),
+              onPanUpdate: (details) => _calculateIndex(details.globalPosition),
               onPanEnd: (_) {
                 // 這裡可以檢查 selectedIndexes 的單字是否正確
                 print("選取的索引: $selectedIndexes");
@@ -166,6 +169,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                 });
               },
               child: GridView.builder(
+                key: _gridKey, // 關鍵：把 Key 綁在這裡
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
