@@ -234,16 +234,23 @@ class _WordSearchGameState extends State<WordSearchGame> {
                           .split('')
                           .reversed
                           .join();
+                      // 檢查 logic.pokemonNames (也確保名單是全大寫)
+                      String? match;
+                      for (var name in logic.pokemonNames) {
+                        String target = name.toUpperCase();
+                        if (selectedWord == target || reversedWord == target) {
+                          match = name;
+                          break;
+                        }
+                      }
 
                       // 2. 比對 Pokemon 名單 (檢查正向或反向)
-                      if (logic.pokemonNames.contains(selectedWord) ||
-                          logic.pokemonNames.contains(reversedWord)) {
+                      if (match != null && !foundWords.contains(match)) {
                         // 答對了！將目前選中的加入永久集合
                         setState(() {
                           foundIndexes.addAll(selectedIndexes);
+                          foundWords.add(match!);
                         });
-                        print("找到 Pokemon: $selectedWord !");
-                        foundWords.add(selectedWord);
 
                         _playSound(); // <--- 在這裡播放比卡超叫聲！
 
