@@ -84,10 +84,10 @@ class WordSearchGame extends StatefulWidget {
 
 class _WordSearchGameState extends State<WordSearchGame> {
   late WordSearchLogic logic;
-  final int gridSize = 8;
+  final int gridSize = 10;
   final GlobalKey _gridKey = GlobalKey();
   List<String> letters = List.generate(
-    64,
+    100,
     (index) => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[index % 26],
   );
   Set<int> foundIndexes = {}; // 儲存已經被永久鎖定的格子
@@ -234,7 +234,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   @override
   void initState() {
     super.initState();
-    logic = WordSearchLogic(8); // 8x8 網格
+    logic = WordSearchLogic(10); // 10x10 網格
     logic.generate();
     // 將生成的 grid 賦值給你的 letters 變數
     letters = logic.grid;
