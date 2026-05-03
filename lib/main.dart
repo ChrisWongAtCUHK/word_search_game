@@ -40,6 +40,8 @@ class WordSearchLogic {
   }
 
   void generate() {
+    // 重新初始化 grid，否則舊的字母會一直留在那裡
+    grid = List.filled(gridSize * gridSize, "");
     actualPlacedWords.clear(); // 重置
     final rand = Random();
 
@@ -183,7 +185,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   void _resetGame() {
     setState(() {
       logic.generate(); // 重新生成網格字母
-      letters = logic.grid; // 更新 UI 用的字母清單
+      letters = List.from(logic.grid); // 更新 UI 用的字母清單
       foundIndexes.clear(); // 清空綠色格子
       selectedIndexes.clear(); // 清空當前選取
       foundWords.clear(); // 清空已找到單字紀錄
