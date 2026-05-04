@@ -16,6 +16,8 @@ class WordSearchLogic {
   late List<String> grid;
 
   List<String> actualPlacedWords = []; // 儲存成功放入網格的單字
+  // 新增：紀錄每個單字的首字母位置
+  Map<String, int> wordFirstCharIndex = {};
 
   WordSearchLogic(this.gridSize) {
     grid = List.filled(gridSize * gridSize, "");
@@ -114,7 +116,12 @@ class WordSearchLogic {
     for (int i = 0; i < word.length; i++) {
       int r = row + (i * dir[0]);
       int c = col + (i * dir[1]);
-      grid[r * gridSize + c] = word[i];
+      int index = r * gridSize + c;
+      grid[index] = word[i];
+      // 紀錄該單字的首字母位置
+      if (i == 0) {
+        wordFirstCharIndex[word] = index;
+      }
     }
   }
 }
@@ -238,10 +245,51 @@ class _WordSearchGameState extends State<WordSearchGame> {
     await _audioPlayer.play(AssetSource('audio/$pokemonName.mp3'));
   }
 
+  // 在 _WordSearchGameState 內新增這個方法
+  void _giveHint() {
+    // 找出還沒被找到的單字
+    List<String> remainingWords = logic.actualPlacedWords
+        .where((word) => !foundWords.contains(word))
+        .toList();
+
+    if (remainingWords.isNotEmpty) {
+      // 隨機挑一個未找到的單字
+      String hintWord = (remainingWords..shuffle()).first;
+      int? hintIndex = logic.wordFirstCharIndex[hintWord];
+
+      if (hintIndex != null) {
+        setState(() {
+          // 將該首字母位置加入已找到的索引，讓它在畫面上變色
+          if (!foundIndexes.contains(hintIndex)) {
+            foundIndexes.add(hintIndex);
+          }
+        });
+
+        // 可以加個 SnackBar 提示玩家正在找哪個字
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("提示：找找看 '$hintWord' 的開頭！"),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Pokemon Word Search")),
+      appBar: AppBar(
+        title: Text("Pokemon Word Search"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.lightbulb_outline, color: Colors.amber),
+            onPressed: _giveHint,
+            tooltip: "提示",
+          ),
+        ],
+      ),
+
       body: Column(
         children: [
           // 頂部資訊區 (例如顯示分數或提示)
