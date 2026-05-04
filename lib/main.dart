@@ -359,6 +359,12 @@ class _WordSearchGameState extends State<WordSearchGame> {
                         setState(() {
                           foundIndexes.addAll(selectedIndexes);
                           foundWords.add(match!);
+
+                          // 移除該單字的提示框（如果有用的話）
+                          int? firstCharIdx = logic.wordFirstCharIndex[match];
+                          if (firstCharIdx != null) {
+                            hintIndexes.remove(firstCharIdx);
+                          }
                         });
 
                         _playSound(match.toLowerCase()); // <--- 在這裡播放叫聲！
