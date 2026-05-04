@@ -65,6 +65,7 @@ class WordSearchLogic {
     // 重新初始化 grid，否則舊的字母會一直留在那裡
     grid = List.filled(gridSize * gridSize, "");
     actualPlacedWords.clear(); // 重置
+    wordFirstCharIndex.clear();
     final rand = Random();
 
     // 1. 先打亂單字庫
