@@ -290,17 +290,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Pokemon Word Search"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.lightbulb_outline, color: Colors.amber),
-            onPressed: _giveHint,
-            tooltip: "提示",
-          ),
-        ],
-      ),
-
+      appBar: AppBar(title: Text("Pokemon Word Search")),
       body: Column(
         children: [
           // 頂部資訊區 (例如顯示分數或提示)
@@ -309,6 +299,23 @@ class _WordSearchGameState extends State<WordSearchGame> {
             child: Text(
               "找到所有隱藏的 Pokemon!",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(width: 8), // 文字與按鈕之間的間距
+          // 燈泡按鈕
+          GestureDetector(
+            onTap: _giveHint,
+            child: Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2), // 淡淡的背景色
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lightbulb_outline,
+                color: Colors.amber[700],
+                size: 24,
+              ),
             ),
           ),
           // 2. 網格區：使用 Expanded 確保網格佔用適當空間
