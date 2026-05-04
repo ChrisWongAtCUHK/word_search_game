@@ -10,6 +10,7 @@ class WordSearchLogic {
     "IVYSAUR",
     "VENUSAUR",
     "CHARMANDER",
+    "CHARMELEON",
     "EEVEE",
     "MEW",
     "CHARIZARD",
