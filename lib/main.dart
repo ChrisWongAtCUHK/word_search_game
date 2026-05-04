@@ -12,9 +12,12 @@ class WordSearchLogic {
     "CHARMANDER",
     "CHARMELEON",
     "CHARIZARD",
+    "SQUIRTLE",
+    "WARTORTLE",
+    "BLASTOISE",
+    "CATERPIE",
     "EEVEE",
     "MEW",
-    "CHARIZARD",
     "BULBASAUR",
     "DITTO",
   ];
