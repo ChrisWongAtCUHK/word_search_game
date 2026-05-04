@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 
 class WordSearchLogic {
   final int gridSize;
@@ -126,7 +127,15 @@ class WordSearchLogic {
   }
 }
 
-void main() => runApp(MaterialApp(home: WordSearchGame()));
+void main() {
+  // 設定狀態列顏色
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: Colors.red, // 變成 Pokemon 紅
+    ),
+  );
+  runApp(MaterialApp(home: WordSearchGame()));
+}
 
 class WordSearchGame extends StatefulWidget {
   const WordSearchGame({super.key});
