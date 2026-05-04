@@ -9,6 +9,7 @@ class WordSearchLogic {
     "PIKACHU",
     "IVYSAUR",
     "VENUSAUR",
+    "CHARMANDER",
     "EEVEE",
     "MEW",
     "CHARIZARD",
