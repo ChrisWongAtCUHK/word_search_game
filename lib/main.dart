@@ -7,6 +7,7 @@ class WordSearchLogic {
   final int gridSize;
   final List<String> pokemonPool = [
     "PIKACHU",
+    "IVYSAUR",
     "EEVEE",
     "MEW",
     "CHARIZARD",
