@@ -8,6 +8,7 @@ class WordSearchLogic {
   final List<String> pokemonPool = [
     "PIKACHU",
     "IVYSAUR",
+    "VENUSAUR",
     "EEVEE",
     "MEW",
     "CHARIZARD",
