@@ -154,6 +154,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   final GlobalKey _gridKey = GlobalKey();
   final AudioPlayer _audioPlayer = AudioPlayer(); // 建立播放器實例
   Set<int> foundIndexes = {}; // 儲存已經被永久鎖定的格子
+  Set<int> hintIndexes = {}; // 儲存提示格子
 
   // 紀錄目前選中的格子索引
   Set<int> selectedIndexes = {};
@@ -220,6 +221,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
       logic.generate(); // 重新生成網格字母
       letters = List.from(logic.grid); // 更新 UI 用的字母清單
       foundIndexes.clear(); // 清空綠色格子
+      hintIndexes.clear(); // 清空提示格子
       selectedIndexes.clear(); // 清空當前選取
       foundWords.clear(); // 清空已找到單字紀錄
       startIndex = null;
@@ -271,9 +273,9 @@ class _WordSearchGameState extends State<WordSearchGame> {
 
       if (hintIndex != null) {
         setState(() {
-          // 將該首字母位置加入已找到的索引，讓它在畫面上變色
-          if (!foundIndexes.contains(hintIndex)) {
-            foundIndexes.add(hintIndex);
+          // 將該首字母位置加入已找到的索引
+          if (!hintIndexes.contains(hintIndex)) {
+            hintIndexes.add(hintIndex);
           }
         });
 
@@ -388,6 +390,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                       itemBuilder: (context, index) {
                         bool isSelected = selectedIndexes.contains(index);
                         bool isFound = foundIndexes.contains(index); // 檢查是否已找到
+                        bool isHint = hintIndexes.contains(index); // 檢查是提示
 
                         return Container(
                           margin: EdgeInsets.all(2),
@@ -396,13 +399,25 @@ class _WordSearchGameState extends State<WordSearchGame> {
                             color: isSelected
                                 ? Colors.orange
                                 : (isFound ? Colors.green : Colors.blue[100]),
+                            border: isHint
+                                ? Border.all(
+                                    color: Colors.yellowAccent,
+                                    width: 3.5, // 增加寬度讓提示更明顯
+                                  )
+                                : Border.all(
+                                    color: Colors.white.withValues(
+                                      alpha: 0.1,
+                                    ), // 平時給予極淡的邊框線，維持格子整齊
+                                    width: 1,
+                                  ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Center(
                             child: Text(
                               letters[index],
                               style: TextStyle(
-                                fontSize: 20,
+                                // 如果是被提示的格子，可以讓字體稍微大一點點
+                                fontSize: isHint ? 22 : 20,
                                 fontWeight: FontWeight.bold,
                                 // 已找到的字可以變色或加刪除線
                                 color: isFound ? Colors.white : Colors.black87,
