@@ -388,56 +388,81 @@ class _WordSearchGameState extends State<WordSearchGame> {
                         selectedIndexes.clear();
                       });
                     },
-
-                    child: GridView.builder(
-                      key: _gridKey, // 關鍵：把 Key 綁在這裡
-                      shrinkWrap: true,
-                      physics:
-                          NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: gridSize,
-                        childAspectRatio: 1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
+                    child: Container(
+                      padding: EdgeInsets.all(8), // 給網格一點邊距
+                      decoration: BoxDecoration(
+                        // 設定漸層背景
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.blue.shade900, // 深藍色
+                            Colors.blue.shade300, // 亮青色，增加視覺延伸感
+                          ],
+                          stops: [0.2, 0.9], // 讓深色佔比少一點，淺色多一點
+                        ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      itemCount: gridSize * gridSize,
-                      itemBuilder: (context, index) {
-                        bool isSelected = selectedIndexes.contains(index);
-                        bool isFound = foundIndexes.contains(index); // 檢查是否已找到
-                        bool isHint = hintIndexes.contains(index); // 檢查是提示
+                      child: GridView.builder(
+                        key: _gridKey, // 關鍵：把 Key 綁在這裡
+                        shrinkWrap: true,
+                        physics:
+                            NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: gridSize,
+                          childAspectRatio: 1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
+                        ),
+                        itemCount: gridSize * gridSize,
+                        itemBuilder: (context, index) {
+                          bool isSelected = selectedIndexes.contains(index);
+                          bool isFound = foundIndexes.contains(
+                            index,
+                          ); // 檢查是否已找到
+                          bool isHint = hintIndexes.contains(index); // 檢查是提示
 
-                        return Container(
-                          margin: EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
-                            color: isSelected
-                                ? Colors.orange
-                                : (isFound ? Colors.green : Colors.blue[100]),
-                            border: isHint
-                                ? Border.all(
-                                    color: Colors.yellowAccent,
-                                    width: 3.5, // 增加寬度讓提示更明顯
-                                  )
-                                : Border.all(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.1,
-                                    ), // 平時給予極淡的邊框線，維持格子整齊
-                                    width: 1,
-                                  ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Center(
-                            child: Text(
-                              letters[index],
-                              style: TextStyle(
-                                // 如果是被提示的格子，可以讓字體稍微大一點點
-                                fontSize: isHint ? 22 : 20,
-                                fontWeight: FontWeight.bold,
-                                // 已找到的字可以變色或加刪除線
-                                color: isFound ? Colors.white : Colors.black87,
+                          return Container(
+                            margin: EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
+                              color: isSelected
+                                  ? Colors.orange
+                                  : (isFound
+                                        ? Colors.green.withValues(
+                                            alpha: 0.7,
+                                          ) // 稍微降低綠色飽和
+                                        : Colors.white.withValues(
+                                            alpha: 0.05,
+                                          )), // 降到 0.05，近乎透明
+                              border: isHint
+                                  ? Border.all(
+                                      color: Colors.yellowAccent,
+                                      width: 3.5, // 增加寬度讓提示更明顯
+                                    )
+                                  : Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ), // 平時給予極淡的邊框線，維持格子整齊
+                                      width: 1,
+                                    ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Center(
+                              child: Text(
+                                letters[index],
+                                style: TextStyle(
+                                  // 如果是被提示的格子，可以讓字體稍微大一點點
+                                  fontSize: isHint ? 22 : 20,
+                                  fontWeight: FontWeight.bold,
+                                  // 已找到的字可以變色或加刪除線
+                                  color: isFound
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   );
                 },
