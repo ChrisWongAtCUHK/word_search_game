@@ -418,7 +418,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                             _playSound(match.toLowerCase()); // <--- 在這裡播放叫聲！
 
                             // 檢查是否全數找完
-                            Future.delayed(Duration(milliseconds: 300), () {
+                            Future.delayed(Duration(milliseconds: 500), () {
                               _checkWin();
                               if (mounted) {
                                 setState(() {
@@ -476,8 +476,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
                               return AnimatedScale(
                                 scale:
                                     _scales[index], // 這裡的 index 來自 itemBuilder
-                                duration: const Duration(milliseconds: 400),
-                                curve: Curves.easeInOutBack, // 加入彈性效果更有遊戲感
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOutBack, // 只在彈出時有效果，縮回時較平順
                                 child: Container(
                                   margin: EdgeInsets.all(2),
                                   decoration: BoxDecoration(
