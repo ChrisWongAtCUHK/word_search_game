@@ -318,7 +318,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
     return Scaffold(
       appBar: AppBar(title: Text("Pokemon Word Search")),
       body: AnimatedContainer(
-        duration: const Duration(seconds: 3), // 動畫變化的平滑時間
+        duration: const Duration(seconds: 4), // 動畫變化的平滑時間
         onEnd: () {
           // 動畫結束後可以觸發特定邏輯（選用）
         },
@@ -475,8 +475,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
                               return AnimatedScale(
                                 scale:
                                     _scales[index], // 這裡的 index 來自 itemBuilder
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.elasticOut, // 加入彈性效果更有遊戲感
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeInOutBack, // 加入彈性效果更有遊戲感
                                 child: Container(
                                   margin: EdgeInsets.all(2),
                                   decoration: BoxDecoration(
@@ -571,7 +571,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
     letters = List.from(logic.grid);
 
     // 設定計時器，每 3 秒更換一次顏色與對齊方向
-    Timer.periodic(const Duration(seconds: 3), (timer) {
+    Timer.periodic(const Duration(seconds: 5), (timer) {
       if (mounted) {
         setState(() {
           colorIndex = colorIndex + 1;
