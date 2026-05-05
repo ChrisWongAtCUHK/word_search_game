@@ -319,7 +319,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
     return Scaffold(
       appBar: AppBar(title: Text("Pokemon Word Search")),
       body: AnimatedContainer(
-        duration: const Duration(seconds: 4), // 動畫變化的平滑時間
+        duration: const Duration(seconds: 5), // 動畫變化的平滑時間
+        curve: Curves.linear, // 設為線性
         onEnd: () {
           // 動畫結束後可以觸發特定邏輯（選用）
         },
