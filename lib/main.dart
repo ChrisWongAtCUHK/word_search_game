@@ -183,6 +183,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   Alignment end = Alignment.topRight;
 
   List<double> _scales = []; // 來儲存每格的縮放倍率（預設 1.0）
+  Timer? _backgroundTimer; // 定義變數
 
   void _applyStraightLine(int start, int end) {
     int startRow = start ~/ gridSize;
@@ -570,8 +571,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
     // 將生成的 grid 賦值給你的 letters 變數
     letters = List.from(logic.grid);
 
-    // 設定計時器，每 3 秒更換一次顏色與對齊方向
-    Timer.periodic(const Duration(seconds: 5), (timer) {
+    // 設定計時器，每 5 秒更換一次顏色與對齊方向
+    _backgroundTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (mounted) {
         setState(() {
           colorIndex = colorIndex + 1;
@@ -594,6 +595,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
   @override
   void dispose() {
     _audioPlayer.dispose(); // 記得銷毀播放器釋放記憶體
+    _backgroundTimer?.cancel(); // 銷毀頁面時停止計時
     super.dispose();
   }
 }
