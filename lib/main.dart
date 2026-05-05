@@ -479,6 +479,17 @@ class _WordSearchGameState extends State<WordSearchGame> {
                                           width: 1,
                                         ),
                                   borderRadius: BorderRadius.circular(4),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.yellow.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                            blurRadius: 10,
+                                            spreadRadius: 2,
+                                          ),
+                                        ]
+                                      : [],
                                 ),
                                 child: Center(
                                   child: Text(
