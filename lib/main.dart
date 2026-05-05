@@ -484,7 +484,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
                                   decoration: BoxDecoration(
                                     // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
                                     color: isSelected
-                                        ? Colors.orange
+                                        ? Colors.orange.withValues(alpha: 0.7)
                                         : (isFound
                                               ? Colors.green.withValues(
                                                   alpha: 0.7,
@@ -507,10 +507,9 @@ class _WordSearchGameState extends State<WordSearchGame> {
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: Colors.yellow.withValues(
-                                                alpha: 0.5,
-                                              ),
-                                              blurRadius: 10,
+                                              color: Colors.yellowAccent
+                                                  .withValues(alpha: 0.5),
+                                              blurRadius: 20,
                                               spreadRadius: 2,
                                             ),
                                           ]
