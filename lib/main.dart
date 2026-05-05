@@ -182,6 +182,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
   Alignment begin = Alignment.bottomLeft;
   Alignment end = Alignment.topRight;
 
+  List<double> _scales = []; // 來儲存每格的縮放倍率（預設 1.0）
+
   void _applyStraightLine(int start, int end) {
     int startRow = start ~/ gridSize;
     int startCol = start % gridSize;
@@ -379,6 +381,10 @@ class _WordSearchGameState extends State<WordSearchGame> {
                               .join();
                           // 檢查 logic.pokemonNames (也確保名單是全大寫)
                           String? match;
+                          // 先把目前選中的索引存成一個固定的 List
+                          final List<int> indexesToAnimate = selectedIndexes
+                              .toList();
+
                           for (var name in logic.pokemonNames) {
                             String target = name.toUpperCase();
                             if (selectedWord == target ||
@@ -401,15 +407,27 @@ class _WordSearchGameState extends State<WordSearchGame> {
                               if (firstCharIdx != null) {
                                 hintIndexes.remove(firstCharIdx);
                               }
+
+                              // 瞬間放大
+                              for (int i in indexesToAnimate) {
+                                _scales[i] = 1.3;
+                              }
                             });
 
                             _playSound(match.toLowerCase()); // <--- 在這裡播放叫聲！
 
                             // 檢查是否全數找完
-                            Future.delayed(
-                              Duration(milliseconds: 300),
-                              () => _checkWin(),
-                            );
+                            Future.delayed(Duration(milliseconds: 300), () {
+                              _checkWin();
+                              if (mounted) {
+                                setState(() {
+                                  // 縮回原狀
+                                  for (int i in indexesToAnimate) {
+                                    _scales[i] = 1.0;
+                                  }
+                                });
+                              }
+                            });
                           }
 
                           // 3. 重置暫時選取的狀態
@@ -454,54 +472,60 @@ class _WordSearchGameState extends State<WordSearchGame> {
                                 index,
                               ); // 檢查是提示
 
-                              return Container(
-                                margin: EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
-                                  color: isSelected
-                                      ? Colors.orange
-                                      : (isFound
-                                            ? Colors.green.withValues(
-                                                alpha: 0.7,
-                                              ) // 稍微降低綠色飽和
-                                            : Colors.white.withValues(
-                                                alpha: 0.05,
-                                              )), // 降到 0.05，近乎透明
-                                  border: isHint
-                                      ? Border.all(
-                                          color: Colors.yellowAccent,
-                                          width: 3.5, // 增加寬度讓提示更明顯
-                                        )
-                                      : Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.1,
-                                          ), // 平時給予極淡的邊框線，維持格子整齊
-                                          width: 1,
-                                        ),
-                                  borderRadius: BorderRadius.circular(4),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.yellow.withValues(
-                                              alpha: 0.5,
-                                            ),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
+                              return AnimatedScale(
+                                scale:
+                                    _scales[index], // 這裡的 index 來自 itemBuilder
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.elasticOut, // 加入彈性效果更有遊戲感
+                                child: Container(
+                                  margin: EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
+                                    color: isSelected
+                                        ? Colors.orange
+                                        : (isFound
+                                              ? Colors.green.withValues(
+                                                  alpha: 0.7,
+                                                ) // 稍微降低綠色飽和
+                                              : Colors.white.withValues(
+                                                  alpha: 0.05,
+                                                )), // 降到 0.05，近乎透明
+                                    border: isHint
+                                        ? Border.all(
+                                            color: Colors.yellowAccent,
+                                            width: 3.5, // 增加寬度讓提示更明顯
+                                          )
+                                        : Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.1,
+                                            ), // 平時給予極淡的邊框線，維持格子整齊
+                                            width: 1,
                                           ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    letters[index],
-                                    style: TextStyle(
-                                      // 如果是被提示的格子，可以讓字體稍微大一點點
-                                      fontSize: isHint ? 22 : 20,
-                                      fontWeight: FontWeight.bold,
-                                      // 已找到的字可以變色或加刪除線
-                                      color: isFound
-                                          ? Colors.white
-                                          : Colors.black87,
+                                    borderRadius: BorderRadius.circular(4),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.yellow.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                              blurRadius: 10,
+                                              spreadRadius: 2,
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      letters[index],
+                                      style: TextStyle(
+                                        // 如果是被提示的格子，可以讓字體稍微大一點點
+                                        fontSize: isHint ? 22 : 20,
+                                        fontWeight: FontWeight.bold,
+                                        // 已找到的字可以變色或加刪除線
+                                        color: isFound
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -563,6 +587,8 @@ class _WordSearchGameState extends State<WordSearchGame> {
         });
       }
     });
+
+    _scales = List<double>.filled(gridSize * gridSize, 1.0);
   }
 
   @override
