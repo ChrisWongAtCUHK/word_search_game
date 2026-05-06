@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
+import 'package:confetti/confetti.dart';
+import 'package:vibration/vibration.dart';
 
 class WordSearchLogic {
   final int gridSize;
@@ -184,6 +186,7 @@ class _WordSearchGameState extends State<WordSearchGame> {
 
   List<double> _scales = []; // 來儲存每格的縮放倍率（預設 1.0）
   Timer? _backgroundTimer; // 定義變數
+  late ConfettiController _confettiController;
 
   void _applyStraightLine(int start, int end) {
     int startRow = start ~/ gridSize;
@@ -258,23 +261,31 @@ class _WordSearchGameState extends State<WordSearchGame> {
 
     // 檢查是否所有「成功放入網格」的單字都找齊了
     if (foundWords.length == expectedSet.length && expectedSet.isNotEmpty) {
-      showDialog(
-        context: context,
-        barrierDismissible: false, // 玩家必須點擊按鈕
-        builder: (context) => AlertDialog(
-          title: Text("太棒了！"),
-          content: Text("你找到了所有的 Pokemon！"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _resetGame(); // 重新開始
-              },
-              child: Text("再玩一次"),
-            ),
-          ],
-        ),
-      );
+      // 1. 立即觸發特效（彩紙與震動）
+      _playVictoryEffects();
+
+      // 2. 延遲彈出對話框（例如延遲 2.5 秒，讓彩紙飛一會兒）
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (!mounted) return; // 確保組件還在畫面上
+
+        showDialog(
+          context: context,
+          barrierDismissible: false, // 玩家必須點擊按鈕
+          builder: (context) => AlertDialog(
+            title: Text("太棒了！"),
+            content: Text("你找到了所有的 Pokemon！"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _resetGame(); // 重新開始
+                },
+                child: Text("再玩一次"),
+              ),
+            ],
+          ),
+        );
+      });
     }
   }
 
@@ -314,251 +325,299 @@ class _WordSearchGameState extends State<WordSearchGame> {
     }
   }
 
+  // 勝利特效函式
+  void _playVictoryEffects() {
+    // 1. 噴發彩紙
+    _confettiController.play();
+
+    // 2. 震動回饋 (檢查設備是否支援)
+    Vibration.hasVibrator().then((hasVibrator) {
+      if (hasVibrator == true) {
+        // 震動模式：等 0ms, 震 500ms, 等 200ms, 震 500ms (更有節奏感)
+        Vibration.vibrate(pattern: [0, 500, 200, 500]);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Pokemon Word Search")),
-      body: AnimatedContainer(
-        duration: const Duration(seconds: 5), // 動畫變化的平滑時間
-        curve: Curves.linear, // 設為線性
-        onEnd: () {
-          // 動畫結束後可以觸發特定邏輯（選用）
-        },
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: begin,
-            end: end,
-            colors: [bottomColor, topColor],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // 頂部資訊區 (例如顯示分數或提示)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  "找到所有隱藏的 Pokemon!",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(seconds: 5), // 動畫變化的平滑時間
+            curve: Curves.linear, // 設為線性
+            onEnd: () {
+              // 動畫結束後可以觸發特定邏輯（選用）
+            },
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: begin,
+                end: end,
+                colors: [bottomColor, topColor],
               ),
-              SizedBox(width: 8), // 文字與按鈕之間的間距
-              // 燈泡按鈕
-              GestureDetector(
-                onTap: _giveHint,
-                child: Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.2), // 淡淡的背景色
-                    shape: BoxShape.circle,
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 頂部資訊區 (例如顯示分數或提示)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "找到所有隱藏的 Pokemon!",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  child: Icon(
-                    Icons.lightbulb_outline,
-                    color: Colors.amber[700],
-                    size: 24,
+                  SizedBox(width: 8), // 文字與按鈕之間的間距
+                  // 燈泡按鈕
+                  GestureDetector(
+                    onTap: _giveHint,
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.2), // 淡淡的背景色
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lightbulb_outline,
+                        color: Colors.amber[700],
+                        size: 24,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              // 2. 網格區：使用 Expanded 確保網格佔用適當空間
-              Expanded(
-                child: Center(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return GestureDetector(
-                        // 手指按下、移動時觸發
-                        onPanUpdate: (details) =>
-                            _calculateIndex(details.globalPosition),
-                        onPanEnd: (_) {
-                          // 1. 將選中的索引轉回字母組合成單字
-                          // 先把 selectedIndexes 轉成 List 並排序（避免選取的順序影響比對，但要注意如果是反向選取需要特別處理）
-                          // 這裡簡單處理：按索引順序組合
-                          List<int> sortedIndices = selectedIndexes.toList()
-                            ..sort();
-                          String selectedWord = sortedIndices
-                              .map((i) => letters[i])
-                              .join();
-                          String reversedWord = selectedWord
-                              .split('')
-                              .reversed
-                              .join();
-                          // 檢查 logic.pokemonNames (也確保名單是全大寫)
-                          String? match;
-                          // 先把目前選中的索引存成一個固定的 List
-                          final List<int> indexesToAnimate = selectedIndexes
-                              .toList();
+                  // 2. 網格區：使用 Expanded 確保網格佔用適當空間
+                  Expanded(
+                    child: Center(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return GestureDetector(
+                            // 手指按下、移動時觸發
+                            onPanUpdate: (details) =>
+                                _calculateIndex(details.globalPosition),
+                            onPanEnd: (_) {
+                              // 1. 將選中的索引轉回字母組合成單字
+                              // 先把 selectedIndexes 轉成 List 並排序（避免選取的順序影響比對，但要注意如果是反向選取需要特別處理）
+                              // 這裡簡單處理：按索引順序組合
+                              List<int> sortedIndices = selectedIndexes.toList()
+                                ..sort();
+                              String selectedWord = sortedIndices
+                                  .map((i) => letters[i])
+                                  .join();
+                              String reversedWord = selectedWord
+                                  .split('')
+                                  .reversed
+                                  .join();
+                              // 檢查 logic.pokemonNames (也確保名單是全大寫)
+                              String? match;
+                              // 先把目前選中的索引存成一個固定的 List
+                              final List<int> indexesToAnimate = selectedIndexes
+                                  .toList();
 
-                          for (var name in logic.pokemonNames) {
-                            String target = name.toUpperCase();
-                            if (selectedWord == target ||
-                                reversedWord == target) {
-                              match = name;
-                              break;
-                            }
-                          }
-
-                          // 2. 比對 Pokemon 名單 (檢查正向或反向)
-                          if (match != null && !foundWords.contains(match)) {
-                            // 答對了！將目前選中的加入永久集合
-                            setState(() {
-                              foundIndexes.addAll(selectedIndexes);
-                              foundWords.add(match!);
-
-                              // 移除該單字的提示框（如果有用的話）
-                              int? firstCharIdx =
-                                  logic.wordFirstCharIndex[match];
-                              if (firstCharIdx != null) {
-                                hintIndexes.remove(firstCharIdx);
+                              for (var name in logic.pokemonNames) {
+                                String target = name.toUpperCase();
+                                if (selectedWord == target ||
+                                    reversedWord == target) {
+                                  match = name;
+                                  break;
+                                }
                               }
 
-                              // 瞬間放大
-                              for (int i in indexesToAnimate) {
-                                _scales[i] = 1.3;
-                              }
-                            });
-
-                            _playSound(match.toLowerCase()); // <--- 在這裡播放叫聲！
-
-                            // 檢查是否全數找完
-                            Future.delayed(Duration(milliseconds: 500), () {
-                              _checkWin();
-                              if (mounted) {
+                              // 2. 比對 Pokemon 名單 (檢查正向或反向)
+                              if (match != null &&
+                                  !foundWords.contains(match)) {
+                                // 答對了！將目前選中的加入永久集合
                                 setState(() {
-                                  // 縮回原狀
+                                  foundIndexes.addAll(selectedIndexes);
+                                  foundWords.add(match!);
+
+                                  // 移除該單字的提示框（如果有用的話）
+                                  int? firstCharIdx =
+                                      logic.wordFirstCharIndex[match];
+                                  if (firstCharIdx != null) {
+                                    hintIndexes.remove(firstCharIdx);
+                                  }
+
+                                  // 瞬間放大
                                   for (int i in indexesToAnimate) {
-                                    _scales[i] = 1.0;
+                                    _scales[i] = 1.3;
+                                  }
+                                });
+
+                                _playSound(
+                                  match.toLowerCase(),
+                                ); // <--- 在這裡播放叫聲！
+
+                                // 檢查是否全數找完
+                                Future.delayed(Duration(milliseconds: 500), () {
+                                  _checkWin();
+                                  if (mounted) {
+                                    setState(() {
+                                      // 縮回原狀
+                                      for (int i in indexesToAnimate) {
+                                        _scales[i] = 1.0;
+                                      }
+                                    });
                                   }
                                 });
                               }
-                            });
-                          }
 
-                          // 3. 重置暫時選取的狀態
-                          setState(() {
-                            startIndex = null;
-                            selectedIndexes.clear();
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(8), // 給網格一點邊距
-                          decoration: BoxDecoration(
-                            // 設定漸層背景
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.blue.shade900, // 深藍色
-                                Colors.blue.shade300, // 亮青色，增加視覺延伸感
-                              ],
-                              stops: [0.2, 0.9], // 讓深色佔比少一點，淺色多一點
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: GridView.builder(
-                            key: _gridKey, // 關鍵：把 Key 綁在這裡
-                            shrinkWrap: true,
-                            physics:
-                                NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: gridSize,
-                                  childAspectRatio:
-                                      1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
+                              // 3. 重置暫時選取的狀態
+                              setState(() {
+                                startIndex = null;
+                                selectedIndexes.clear();
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(8), // 給網格一點邊距
+                              decoration: BoxDecoration(
+                                // 設定漸層背景
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.blue.shade900, // 深藍色
+                                    Colors.blue.shade300, // 亮青色，增加視覺延伸感
+                                  ],
+                                  stops: [0.2, 0.9], // 讓深色佔比少一點，淺色多一點
                                 ),
-                            itemCount: gridSize * gridSize,
-                            itemBuilder: (context, index) {
-                              bool isSelected = selectedIndexes.contains(index);
-                              bool isFound = foundIndexes.contains(
-                                index,
-                              ); // 檢查是否已找到
-                              bool isHint = hintIndexes.contains(
-                                index,
-                              ); // 檢查是提示
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: GridView.builder(
+                                key: _gridKey, // 關鍵：把 Key 綁在這裡
+                                shrinkWrap: true,
+                                physics:
+                                    NeverScrollableScrollPhysics(), // 禁用滾動，確保手勢被選取邏輯接收
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: gridSize,
+                                      childAspectRatio:
+                                          1.0, // 1.0 是正方形，如果設為 1.2 會變扁，能顯示更多行
+                                    ),
+                                itemCount: gridSize * gridSize,
+                                itemBuilder: (context, index) {
+                                  bool isSelected = selectedIndexes.contains(
+                                    index,
+                                  );
+                                  bool isFound = foundIndexes.contains(
+                                    index,
+                                  ); // 檢查是否已找到
+                                  bool isHint = hintIndexes.contains(
+                                    index,
+                                  ); // 檢查是提示
 
-                              return AnimatedScale(
-                                scale:
-                                    _scales[index], // 這裡的 index 來自 itemBuilder
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.easeOutBack, // 只在彈出時有效果，縮回時較平順
-                                child: Container(
-                                  margin: EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
-                                    color: isSelected
-                                        ? Colors.orange.withValues(alpha: 0.7)
-                                        : (isFound
-                                              ? Colors.green.withValues(
-                                                  alpha: 0.7,
-                                                ) // 稍微降低綠色飽和
-                                              : Colors.white.withValues(
-                                                  alpha: 0.05,
-                                                )), // 降到 0.05，近乎透明
-                                    border: isHint
-                                        ? Border.all(
-                                            color: Colors.yellowAccent,
-                                            width: 3.5, // 增加寬度讓提示更明顯
-                                          )
-                                        : Border.all(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.1,
-                                            ), // 平時給予極淡的邊框線，維持格子整齊
-                                            width: 1,
+                                  return AnimatedScale(
+                                    scale:
+                                        _scales[index], // 這裡的 index 來自 itemBuilder
+                                    duration: const Duration(milliseconds: 600),
+                                    curve:
+                                        Curves.easeOutBack, // 只在彈出時有效果，縮回時較平順
+                                    child: Container(
+                                      margin: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        // 優先序：正在選取 (橙色) > 已經找到 (綠色) > 預設 (藍色)
+                                        color: isSelected
+                                            ? Colors.orange.withValues(
+                                                alpha: 0.7,
+                                              )
+                                            : (isFound
+                                                  ? Colors.green.withValues(
+                                                      alpha: 0.7,
+                                                    ) // 稍微降低綠色飽和
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.05,
+                                                    )), // 降到 0.05，近乎透明
+                                        border: isHint
+                                            ? Border.all(
+                                                color: Colors.yellowAccent,
+                                                width: 3.5, // 增加寬度讓提示更明顯
+                                              )
+                                            : Border.all(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.1,
+                                                ), // 平時給予極淡的邊框線，維持格子整齊
+                                                width: 1,
+                                              ),
+                                        borderRadius: BorderRadius.circular(4),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.yellowAccent
+                                                      .withValues(alpha: 0.5),
+                                                  blurRadius: 20,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          letters[index],
+                                          style: TextStyle(
+                                            // 如果是被提示的格子，可以讓字體稍微大一點點
+                                            fontSize: isHint ? 22 : 20,
+                                            fontWeight: FontWeight.bold,
+                                            // 已找到的字可以變色或加刪除線
+                                            color: isFound
+                                                ? Colors.white
+                                                : Colors.black87,
                                           ),
-                                    borderRadius: BorderRadius.circular(4),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.yellowAccent
-                                                  .withValues(alpha: 0.5),
-                                              blurRadius: 20,
-                                              spreadRadius: 2,
-                                            ),
-                                          ]
-                                        : [],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      letters[index],
-                                      style: TextStyle(
-                                        // 如果是被提示的格子，可以讓字體稍微大一點點
-                                        fontSize: isHint ? 22 : 20,
-                                        fontWeight: FontWeight.bold,
-                                        // 已找到的字可以變色或加刪除線
-                                        color: isFound
-                                            ? Colors.white
-                                            : Colors.black87,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Wrap(
-                  spacing: 10,
-                  children: logic.actualPlacedWords.map((name) {
-                    bool isFound = foundWords.contains(name); // 假設你紀錄了找到的單字名
-                    return Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 16,
-                        decoration: isFound ? TextDecoration.lineThrough : null,
-                        color: isFound ? Colors.grey : Colors.black,
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Wrap(
+                      spacing: 10,
+                      children: logic.actualPlacedWords.map((name) {
+                        bool isFound = foundWords.contains(
+                          name,
+                        ); // 假設你紀錄了找到的單字名
+                        return Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 16,
+                            decoration: isFound
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: isFound ? Colors.grey : Colors.black,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // 加入彩紙噴發器
+          ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive, // 向四面八方噴發
+            shouldLoop: false,
+            colors: const [
+              Colors.green,
+              Colors.blue,
+              Colors.pink,
+              Colors.orange,
+              Colors.purple,
+            ], // 彩紙顏色
+            numberOfParticles: 20, // 噴發密度
+          ),
+        ],
       ),
     );
   }
@@ -590,12 +649,18 @@ class _WordSearchGameState extends State<WordSearchGame> {
     });
 
     _scales = List<double>.filled(gridSize * gridSize, 1.0);
+
+    // 初始化彩紙控制器，播放時間設為 3 秒
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose(); // 記得銷毀播放器釋放記憶體
+    _audioPlayer.dispose(); // 銷毀播放器釋放記憶體
     _backgroundTimer?.cancel(); // 銷毀頁面時停止計時
+    _confettiController.dispose(); // 銷毀彩紙控制器
     super.dispose();
   }
 }
